@@ -31,6 +31,7 @@ os.getcwd()
 
 # Data: NFL Field Goals 2008
 nfl08_fg = pd.read_csv("http://users.stat.ufl.edu/~winner/data/nfl2008_fga.csv")
+redwine = pd.read_csv("../data/winequality-red-ddl.csv")
 
 '''
 Question 1
@@ -43,6 +44,7 @@ Pseudocode:
 - Append the proportion of field goals attempted and made for each quarter.
 '''
 
+'''
 # Single line transactions
 # print(nfl08_fg.info)
 # print(nfl08_fg.head())
@@ -97,6 +99,7 @@ def fg_by_qtr(df):
     return fg_table
 
 print(fg_by_qtr(nfl08_fg))
+'''
 
 # NFL Kickers in 2008 attempted and made the most field goals in the 2nd quarter. 
 # However, the highest percentage of field goals made occurred in the 1st quarter, closely followed by the 4th quarter.
@@ -107,5 +110,132 @@ Question 2
 - What NFL team had the highest FG percentage in the 2008 season?
 
 Pseudocode:
-- 
+- Create a new dataset of the fg data grouped by team.
+- Calculate the total made and divide by total attempted.
+- Assign fg percentage as a new column to the grouped table.
+- Sort the table by field goal percentage to identify the team with the greatest kicking success.
+'''
+
+'''
+# Single line transactions
+
+# Group data by team and sum up the total attributes per team
+fg_teams = nfl08_fg.groupby('kickteam').sum()
+
+# Append column for total attempted and percent made
+fg_teams = fg_teams.assign(attempted = lambda x: x["GOOD"] + x["Missed"] + x["Blocked"])
+fg_teams = fg_teams.assign(fg_percentage = lambda x: x["GOOD"] / x["attempted"])
+
+# Sort the table by field goal percentage
+fg_teams = fg_teams.sort_values(by="fg_percentage", ascending=False)
+
+# Condense the table to field goal stats
+fg_teams = fg_teams.loc[:, ["attempted", "GOOD", "Missed", "Blocked", "fg_percentage"]]
+
+print(fg_teams.head())
+
+def team_fg_percentage(df):
+    fg_teams = df.groupby('kickteam').sum()
+    fg_teams = fg_teams.assign(attempted = lambda x: x["GOOD"] + x["Missed"] + x["Blocked"],
+                               fg_percentage = lambda x: x["GOOD"] / x["attempted"])
+    fg_teams = fg_teams.sort_values(by="fg_percentage", ascending=False)
+    fg_teams = fg_teams.loc[:, ["attempted", "GOOD", "Missed", "Blocked", "fg_percentage"]]
+    return fg_teams
+
+print(team_fg_percentage(nfl08_fg).head())
+'''
+
+
+
+'''
+Question 3
+- Is there a correlation between pH and quality of red wine?
+
+Pseudocode:
+- Make a new data set grouped by quality of red wine
+- Create a new table sorted by fixed acidity
+- Create an additional new table sorted by pH
+- Find the average fixed acidity and pH for quality grouping
+- Append the two tables together
+'''
+
+
+# Single line transactions
+
+wine_quality = redwine.groupby("quality")
+
+# Create individuals for acidity and pH
+quality_ph = wine_quality.loc[:, ["pH"]]
+
+# Find the average fixed acidity and pH
+#quality_acidity = quality_ph.assign(acidity = lambda x: x["pH"].mean())
+
+print(wine_quality)
+
+
+'''
+quality_acidity_mean = redwine.groupby("quality")['fixed acidity'].mean()
+quality_ph_mean = redwine.groupby("quality")['pH'].mean()
+
+print("Average Fixed Acidity by Quality:")
+print(quality_acidity_mean)
+
+print("\nAverage pH by Quality:")
+print(quality_ph_mean)
+
+'''
+
+
+'''
+Question 4
+- Do wines with a greater alcohol concentration have a lower density?
+
+Pseudocode:
+- Create data sets for different ranges of alcohol concentration
+- Compute the average density for each data set
+- Compare the densities in a table
+'''
+'''
+# Single Line Transactions
+
+# Create separate data grouped by alcohol
+alcohol_12 = redwine.query('alcohol >= 12')
+alcohol_11 = redwine.query('alcohol < 12 and alcohol >= 11')
+alcohol_10 = redwine.query('alcohol < 11 and alcohol >= 10')
+alcohol_9 = redwine.query('alcohol < 10')
+
+# Calculate the average density for each grouping
+density_12 = alcohol_12["density"].mean()
+density_11 = alcohol_11["density"].mean()
+density_10 = alcohol_10["density"].mean()
+density_9 = alcohol_9["density"].mean()
+
+# Create a table to compare densities
+density_table = pd.DataFrame({
+    'alcohol_concentration': ['+ 12%', '12-11%', '11-10%', '< 10%'],
+    'average_density': [density_12, density_11, density_10, density_9]
+})
+
+# Sort the table by densities
+density_table = density_table.sort_values(by="average_density", ascending=False)
+
+# Return the top row of the data set
+print(density_table.iloc[0]['alcohol_concentration'])
+
+
+def wine_densities(df):
+    alcohol_12 = df.query('alcohol >= 12')["density"].mean()
+    alcohol_11 = df.query('alcohol < 12 and alcohol >= 11')["density"].mean()
+    alcohol_10 = df.query('alcohol < 11 and alcohol >= 10')["density"].mean()
+    alcohol_9 = df.query('alcohol < 10')["density"].mean()
+    density_table = pd.DataFrame({
+        'alcohol_concentration': ['+ 12%', '12-11%', '11-10%', '< 10%'],
+        'average_density': [alcohol_12, alcohol_11, alcohol_10, alcohol_9]
+    })
+    density_table = density_table.sort_values(by="average_density", ascending=False)
+    highest_density = density_table.iloc[0]['alcohol_concentration']
+    print(density_table)
+    return(f"The {highest_density} alcohol concentration range has the highest density on average.")
+
+print(wine_densities(redwine))
 '''
