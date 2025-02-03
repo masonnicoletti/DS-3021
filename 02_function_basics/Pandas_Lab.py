@@ -14,15 +14,6 @@ For each of the two datasets you select, produce four parts:
 4. Pipe the individual lines together and create a function
 
 You can work with your groups for coding tips/advise or work through similar programming issues, but everyone must have their own set of questions and results. 
-
-
-### Data
-
-Any dataset in the class repo works or:
-
-nf2008_fg: http://users.stat.ufl.edu/~winner/data/nfl2008_fga.csv
-
-red_wine_quality: https://data.world/uci/wine-quality
 '''
 
 import pandas as pd
@@ -31,7 +22,6 @@ os.getcwd()
 
 # Data: NFL Field Goals 2008
 nfl08_fg = pd.read_csv("http://users.stat.ufl.edu/~winner/data/nfl2008_fga.csv")
-redwine = pd.read_csv("../data/winequality-red-ddl.csv")
 
 '''
 Question 1
@@ -41,10 +31,10 @@ Pseudocode:
 - Make 4 separate data sets for each quarter (1, 2, 3, 4).
 - Make a data table to hold the total field goals attempted and made per quarter.
 - Append the total field goals made per quarter divided by the total attempted.
+- Sum up the total fg attempted and the total fg made.
 - Append the proportion of field goals attempted and made for each quarter.
 '''
 
-'''
 # Single line transactions
 # print(nfl08_fg.info)
 # print(nfl08_fg.head())
@@ -54,15 +44,6 @@ q1_fg = nfl08_fg[nfl08_fg["qtr"] == 1]
 q2_fg = nfl08_fg[nfl08_fg["qtr"] == 2]
 q3_fg = nfl08_fg[nfl08_fg["qtr"] == 3]
 q4_fg = nfl08_fg[nfl08_fg["qtr"] == 4]
-
-# Group the data set by quarter
-q_fg = nfl08_fg.groupby("qtr")
-# [Unused]
-
-# Calculate the fg attempted and made in each quarter
-fg_attempted = q_fg.size()
-fg_made = q_fg["GOOD"].sum()
-# [Unused]
 
 # Make a data table with the attempted and made fgs
 fg_table = pd.DataFrame({
@@ -82,7 +63,10 @@ total_good = nfl08_fg[nfl08_fg["GOOD"] == 1].shape[0]
 fg_table = fg_table.assign(prop_attempted = lambda x: (x['fg_attempted'] / total_fg))
 fg_table = fg_table.assign(prop_made = lambda x: (x['fg_made'] / total_good))
 
+# Print the final table
+# print(fg_table)
 
+# Function
 def fg_by_qtr(df):
     q1_fg = nfl08_fg[nfl08_fg["qtr"] == 1]
     q2_fg = nfl08_fg[nfl08_fg["qtr"] == 2]
@@ -99,7 +83,6 @@ def fg_by_qtr(df):
     return fg_table
 
 print(fg_by_qtr(nfl08_fg))
-'''
 
 # NFL Kickers in 2008 attempted and made the most field goals in the 2nd quarter. 
 # However, the highest percentage of field goals made occurred in the 1st quarter, closely followed by the 4th quarter.
@@ -114,9 +97,9 @@ Pseudocode:
 - Calculate the total made and divide by total attempted.
 - Assign fg percentage as a new column to the grouped table.
 - Sort the table by field goal percentage to identify the team with the greatest kicking success.
+- Remove columns from the product table as to only see necessary fg stats.
 '''
 
-'''
 # Single line transactions
 
 # Group data by team and sum up the total attributes per team
@@ -132,8 +115,10 @@ fg_teams = fg_teams.sort_values(by="fg_percentage", ascending=False)
 # Condense the table to field goal stats
 fg_teams = fg_teams.loc[:, ["attempted", "GOOD", "Missed", "Blocked", "fg_percentage"]]
 
-print(fg_teams.head())
+# Print the resulting table
+# print(fg_teams.head())
 
+# Function
 def team_fg_percentage(df):
     fg_teams = df.groupby('kickteam').sum()
     fg_teams = fg_teams.assign(attempted = lambda x: x["GOOD"] + x["Missed"] + x["Blocked"],
@@ -143,47 +128,56 @@ def team_fg_percentage(df):
     return fg_teams
 
 print(team_fg_percentage(nfl08_fg).head())
-'''
 
+# The Detroit Lions had the highest field goal percentage in the 2008 season.
+
+
+# Data: Red Wine Quality
+redwine = pd.read_csv("data/winequality-red-ddl.csv")
 
 
 '''
 Question 3
-- Is there a correlation between pH and quality of red wine?
+- Is there a correlation between fixed acidity or pH and the quality of red wine?
 
 Pseudocode:
-- Make a new data set grouped by quality of red wine
-- Create a new table sorted by fixed acidity
-- Create an additional new table sorted by pH
-- Find the average fixed acidity and pH for quality grouping
-- Append the two tables together
+- Make a new data set grouped by quality of red wine.
+- Create a new table sorted by fixed acidity and another table sorted by pH.
+- Find the average fixed acidity and pH for quality groupings.
+- Append the two groupings together.
 '''
-
 
 # Single line transactions
 
-wine_quality = redwine.groupby("quality")
+# Condense important columns into a new data set (get rid of non-numeric columns)
+wine_quality = redwine.loc[:,["fixed acidity", "pH", "quality"]]
 
-# Create individuals for acidity and pH
-quality_ph = wine_quality.loc[:, ["pH"]]
+# Group the data by wine quality
+wine_quality = wine_quality.groupby("quality")
 
-# Find the average fixed acidity and pH
-#quality_acidity = quality_ph.assign(acidity = lambda x: x["pH"].mean())
+# Find the average fixed acidity and pH for each group
+acidity_mean = wine_quality['fixed acidity'].mean()
+ph_mean = wine_quality['pH'].mean()
 
-print(wine_quality)
+# Append the two groupings together
+quality_correlation = pd.merge(acidity_mean, ph_mean, on = "quality")
 
+# Print the merged table
+# print(quality_correlation)
 
-'''
-quality_acidity_mean = redwine.groupby("quality")['fixed acidity'].mean()
-quality_ph_mean = redwine.groupby("quality")['pH'].mean()
+# Function
+def redwine_quality(df):
+    quality = df.loc[:, ["fixed acidity", "pH", "quality"]]
+    quality = quality.groupby("quality")
+    acidity_mean = quality["fixed acidity"].mean()
+    ph_mean = quality["pH"].mean()
+    quality_correlation = pd.merge(acidity_mean, ph_mean, on = "quality")
+    return quality_correlation
 
-print("Average Fixed Acidity by Quality:")
-print(quality_acidity_mean)
+print(redwine_quality(redwine))
 
-print("\nAverage pH by Quality:")
-print(quality_ph_mean)
-
-'''
+# There is no apparent correlation between the quality of red wines and their fixed acidity
+# There is a positive correlation between redwine acidity (pH) and quality. Higher quality wines have a lower pH on average.
 
 
 '''
@@ -191,11 +185,11 @@ Question 4
 - Do wines with a greater alcohol concentration have a lower density?
 
 Pseudocode:
-- Create data sets for different ranges of alcohol concentration
-- Compute the average density for each data set
-- Compare the densities in a table
+- Create data sets for different ranges of alcohol concentration.
+- Compute the average density for each data set.
+- Sort the densities in the table to compare averages.
 '''
-'''
+
 # Single Line Transactions
 
 # Create separate data grouped by alcohol
@@ -220,9 +214,9 @@ density_table = pd.DataFrame({
 density_table = density_table.sort_values(by="average_density", ascending=False)
 
 # Return the top row of the data set
-print(density_table.iloc[0]['alcohol_concentration'])
+# print(density_table.iloc[0]['alcohol_concentration'])
 
-
+# Function
 def wine_densities(df):
     alcohol_12 = df.query('alcohol >= 12')["density"].mean()
     alcohol_11 = df.query('alcohol < 12 and alcohol >= 11')["density"].mean()
@@ -238,4 +232,6 @@ def wine_densities(df):
     return(f"The {highest_density} alcohol concentration range has the highest density on average.")
 
 print(wine_densities(redwine))
-'''
+
+# Yes, wines with a greater alcohol concentration tend to have a lower density. 
+# The grouping of wines with an alcohol concentration less than 10% had the highest average density.
